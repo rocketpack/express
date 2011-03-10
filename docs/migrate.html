@@ -2,32 +2,7 @@
 	<head>
 		<title>Express - node web framework</title>
 		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>
-		<script>
-			$(function(){
-				var done;
-				$(document).scroll(function(event){
-					if (!done) {
-						$('#toc').animate({
-							top: 0
-						});
-					}
-				});
-			});
-		</script>
 		<style>
-		    #header {
-				position: absolute;
-				top: 10px;
-				left: 0;
-		        padding: 12px 0;
-				text-indent: 40px;
-				width: 100%;
-		        border-top: 1px solid rgba(0,0,0,0.7);
-		        border-bottom: 1px solid rgba(0,0,0,0.7);
-		        background: rgba(255,255,255,0.1) url(http://www.sencha.com/favicon.ico) no-repeat 15px 50%;
-				text-align: left;
-				color: #fff;
-		    }
 			#tagline {
 			  margin-left: 75px;
 			  margin-bottom: 30px;
@@ -41,8 +16,7 @@
 			  font: 14px/1.4 "Helvetica Neue", "Lucida Grande", "Arial";
 			  font-size: 14px;
 			  line-height: 1.5;
-			  -webkit-text-stroke: 1px rgba(0, 0, 0, 0.1);
-			  -moz-text-stroke: 1px rgba(0, 0, 0, 0.1);
+			  -webkit-font-smoothing: antialiased;
 			  background: url(images/bg.jpg) 50% 0 no-repeat;
 			  color: #8b8b8b; }
 
@@ -65,13 +39,17 @@
 			  a:hover {
 			    opacity: 0.8; }
 
-			h1, h2, h3 {
+			h1, h2, h3, h4 {
 			  margin: 45px 0 0 0;
 			  color: white;
 			  text-shadow: 1px 2px 2px rgba(0,0,0,0.6); }
 
 			h3 {
 			  font-size: 18px; }
+			h4 {
+			  margin-left: 10px;
+			  font-size: 14px;
+			}
 
 			pre {
 			  margin: 20px 10px;
@@ -93,9 +71,19 @@
 			    margin: 0;
 			    padding: 2px 0;
 			    list-style: square; }
+          ul li ul {
+            margin: 0;
+            padding-left: 12px;
+          }
+
+      .man-name, #Express { display:none; }
 
 			.sect {
 			  margin-left: 40px; }
+			img {
+			  margin-left: 20px;
+			  margin-bottom: 15px;
+			}
 
 			#logo {
 			  display: block;
@@ -123,17 +111,18 @@
 
 			#container {
 			  margin: 0 auto;
-			  padding-top: 110px;
+			  padding-top: 80px;
 			  width: 550px; }
 
 			#toc {
 				position: fixed;
-				top: 60px;
+				top: 0;
 				left: 0;
 				margin: 0 0 0 15px;
 				padding: 15px;
 				height: 100%;
 				background: rgba(0,0,0,0.2);
+				overflow: auto;
 				border-right: 1px solid rgba(255,255,255,0.05);
 			}
 			#toc li {
@@ -144,7 +133,7 @@
 				font-size: 11px;
 			}
 			#menu {
-			  margin-left: 65px;
+			  margin-left: 75px;
 			  padding: 0;
 			  padding-bottom: 30px; }
 			  #menu li {
@@ -171,12 +160,23 @@
 			        -webkit-box-shadow: 1px 1px 1px rgba(0,0,0,0.4);
 			        -moz-box-shadow: 1px 1px 1px rgba(0,0,0,0.4); }
 		</style>
+		<script>
+		  $(function(){
+		    $('.section').hide();
+		    $('.toggle, a.section-title').toggle(function(){
+		      $(this).siblings('ul').fadeIn(300);
+		      return false;
+		    }, function(){
+		      $(this).siblings('ul').fadeOut(300);
+		      return false;
+		    });
+		  });
+		</script>
 	</head>
 	<body>
 		<a href='http://github.com/visionmedia/express'> 
 		  <img alt='Fork me on GitHub' id='ribbon' src='http://s3.amazonaws.com/github/ribbons/forkme_right_white_ffffff.png' /> 
 		</a>
-		<div id="header"><strong>Sencha</strong> labs</div>
 		<div id="wrapper">
 			<div id="container">
 				<a href='http://github.com/visionmedia/express' id='logo'>Express</a> 
@@ -187,221 +187,170 @@
 				<ul id="menu">
 					<li><a href="index.html">Home</a></li>
 					<li><a href="guide.html">Guide</a></li>
-					<li><a href="contrib.html">Contributing</a></li>
-					<li><a href="migrate.html">1.x Migration</a></li>
+					<li><a href="screencasts.html">Screencasts</a></li>
+					<li><a href="applications.html">Applications</a></li>
 				</ul>
 <div class='mp'>
-<h3 id="Built-On-Connect">Built On Connect</h3>
+<h2 id="Express">Express</h2>
+<p class="man-name">
+  <code>migrate</code>
+</p>
+<h3 id="Express-1-x-to-2-x-Migration">Express 1.x to 2.x Migration</h3>
 
-<p>Express 1.x is written to run on-top of the <a href="http://extjs.github.com/Connect">Connect</a> middlware
-framework, thus the <em>Plugin</em> has been replaced by Connect's middleware. By abstracting our middleware
-to Connect we allow additional community frameworks to develop robust, high-level frameworks using
-the same technologies as Express.</p>
+<h3 id="HTTPS">HTTPS</h3>
 
-<h3 id="Creating-Applications">Creating Applications</h3>
+<p> Creating an HTTPS server is simply, simply pass the TLS options to <em>express.createServer()</em>:</p>
 
-<p>Previously due to legacy code implemented in the early days of node,
-Express unfortunately had some globals. The DSL would previously be
-accessed as shown below:</p>
+<pre><code> var app = express.createServer({
+     key: ...
+   , cert: ...
+ });
 
-<pre><code>require('express');
-
-configure(function(){
-    // app configuration
-});
-
-get('/', function(){
-    return 'hello world';
-});
+ app.listen(443);
 </code></pre>
 
-<p>Now we utilize the CommonJS module system appropriately, and
-introduce <em>express.createServer()</em> which accepts the same arguments
-as <em>http.createServer()</em>:</p>
+<h3 id="req-header-Referrer">req.header() Referrer</h3>
 
-<pre><code>var express = require('express'),
-    app = express.createServer();
+<p> Previously if anyone was doing something similar to:</p>
 
-app.configure(function(){
-    // app configuration
-});
-
-app.get('/', function(req, res){
-    res.send('hello world');
-});
+<pre><code> req.headers.referrer || req.headers.referer
+ req.header('Referrer') || req.header('Referer')
 </code></pre>
 
-<p>Express 1.x does <em>not</em> currently allow returning of a string.</p>
+<p> With the new special-case we may now simply use <em>Referrer</em> which will return either if defined:</p>
 
-<h3 id="Plugins-vs-Middleware">Plugins vs Middleware</h3>
-
-<p>Previously Express was bundled with plugins, which were essentially what
-are now Connect middleware. Previously plugins would be utilized in a manor
-similar to below:</p>
-
-<pre><code>use(Logger);
-use(MethodOverride);
-use(Cookie);
+<pre><code> req.header('Referrer')
 </code></pre>
 
-<p>Which we can now <em>use()</em> within our app, or pass to the <em>express.createServer()</em> method:</p>
+<h3 id="res-local-name-val-">res.local(name, val)</h3>
 
-<pre><code>var connect = require('connect');
+<p> Previously all local variables had to be passed to <em>res.render()</em>, or either <em>app.helpers()</em> or <em>app.dynamicHelpers()</em>, now we may do this at the request-level progressively. The <em>res.local()</em> method accepts a <em>name</em> and <em>val</em>, however the locals passed to <em>res.render()</em> will take precedence.</p>
 
-var app = express.createServer(
-    connect.logger(),
-    connect.methodOverride(),
-    connect.cookieDecoder()
-);
+<p> For example we may utilize this feature to create locals in middleware:</p>
+
+<pre><code> function loadUser(req, res, next) {
+   User.get(req.params.id, function(err, user){
+     res.local('user', user);
+     next();
+   });
+ }
+
+ app.get('/user/:id', loadUser, function(req, res){
+   res.render('user');
+ });
 </code></pre>
 
-<p>or:</p>
+<h3 id="req-param-name-defaultValue-">req.param(name[, defaultValue])</h3>
 
-<pre><code>var connect = require('connect');
-var app = express.createServer();
+<p> Previously only <em>name</em> was accepted, so some of you may have been doing the following:</p>
 
-app.use(connect.logger());
-app.use(connect.methodOverride());
-app.use(connect.cookieDecoder());
+<pre><code> var id = req.param('id') || req.user.id;
 </code></pre>
 
-<p>For documentation on creating Connect middleware visit <a href="http://extjs.github.com/Connect/#Middleware-Authoring">Middleware Authoring</a>.</p>
+<p> The new <em>defaultValue</em> argument can handle this nicely:</p>
 
-<h3 id="Running-Applications">Running Applications</h3>
-
-<p>Previously a global function <em>run()</em>, was available:</p>
-
-<pre><code>run();
+<pre><code> var id = req.param('id', req.user.id);
 </code></pre>
 
-<p>The new <em>express.Server</em> has the same API as <em>http.Server</em>,
-so we can do things like:</p>
+<h3 id="app-helpers-app-locals-">app.helpers() / app.locals()</h3>
 
-<pre><code>app.listen();
-app.listen(3000);
+<p>  <em>app.locals()</em> is now an alias of <em>app.helpers()</em>, as helpers makes more sense for functions.</p>
+
+<h3 id="req-accepts-type-">req.accepts(type)</h3>
+
+<p>  <em>req.accepts()</em> now accepts extensions:</p>
+
+<pre><code>  // Accept: text/html
+  req.accepts('html');
+  req.accepts('.html');
+  // =&gt; true
+
+  // Accept: text/*; application/json
+  req.accepts('html');
+  req.accepts('text/*');
+  req.accepts('text/plain');
+  req.accepts('application/json');
+  // =&gt; true
+
+  req.accepts('image/png');
+  req.accepts('png');
+  // =&gt; false
 </code></pre>
 
-<h3 id="Route-Parameters">Route Parameters</h3>
+<h3 id="res-cookie-">res.cookie()</h3>
 
-<p>Previously we could use <em>this.param()</em> to attempt
-fetching a route, query string, or request body parameter:</p>
+<p> Previously only directly values could be passed, so for example:</p>
 
-<pre><code>get('/user/:id', function(){
-    this.param('id');
-});
+<pre><code>res.cookie('rememberme', 'yes', { expires: new Date(Date.now() + 900000) });
 </code></pre>
 
-<p>Polymorphic parameter access can be done using <code>req.param()</code>:</p>
+<p>However now we have the alternative <em>maxAge</em> property which may be used to set <em>expires</em> relative to <em>Date.now()</em> in milliseconds, so our example above can now become:</p>
 
-<pre><code>app.get('/user/:id', function(req, res){
-    req.param('id');
-});
+<pre><code>res.cookie('rememberme', 'yes', { maxAge: 900000 });
 </code></pre>
 
-<p>Route parameters are available via <code>req.params</code>:</p>
+<h3 id="res-download-res-sendfile-">res.download() / res.sendfile()</h3>
 
-<pre><code>app.get('/user/:id', function(req, res){
-    req.params.id;
-});
+<p> Both of these methods now utilize Connect's static file server behind the scenes (actually the previous Express code was ported to Connect 1.0). With this change comes a change to the callback as well. Previously the <em>path</em> and <em>stream</em> were passed, however now only an <em>error</em> is passed, when no error has occurred the callback will be invoked indicating that the file transfer is complete. The callback remains optional:</p>
+
+<pre><code> res.download('/path/to/file');
+
+ res.download('/path/to/file', function(err){
+   if (err) {
+     console.error(err);
+   } else {
+     console.log('transferred');
+   }
+ });
 </code></pre>
 
-<h3 id="Passing-Route-Control">Passing Route Control</h3>
+<p> The <em>stream threshold</em> setting was removed.</p>
 
-<p>Old express had a weak notion of route passing,
-which did not support async, and was never properly
-implemented for practical use:</p>
+<h3 id="res-render-">res.render()</h3>
 
-<pre><code>get('/', function(){
-    this.pass('/foobar');
-});
+<p> Previously locals were passed as a separate key:</p>
+
+<pre><code> res.render('user', { layout: false, locals: { user: user }});
 </code></pre>
 
-<p>Now Express has access to Connect's <em>next()</em> function,
-which is passed as the third and final argument. Calling <em>next()</em> will
-pass control to the next <em>matching route</em>, or continue down the stack
-of Connect middleware.</p>
+<p> In Express 2.0 both the locals and the options are one in the same, meaning you cannot have a local variable named <em>layout</em> as it is reserved for express, however this cleans up the API:</p>
 
-<pre><code>app.get('/user/:id?', function(req, res, next){
-    next();
-});
-
-app.get('/user', function(){
-    // ... respond
-});
+<pre><code> res.render('user', { layout: false, user: user });
 </code></pre>
 
-<h3 id="View-Rendering">View Rendering</h3>
+<h3 id="res-partial-">res.partial()</h3>
 
-<p>View filenames no longer take the form <em>Express</em>.<em>TYPE</em>.<em>ENGINE</em>,
-the <em>Content-Type</em> can be set via <em>res.contentType()</em> or
-<em>res.header()</em>. For example what was previously <em>layout.html.haml</em>,
-should now be <em>layout.haml</em>.</p>
+<p> Express 2.0 adds the <em>res.partial()</em> method, helpful for rendering partial fragments over WebSockets or Ajax requests etc. The API is identical to the <em>partial()</em> calls within views.</p>
 
-<p>Previously a view render looked something like this:</p>
+<pre><code> // render a collection of comments
+ res.partial('comment', [comment1, comment2]); 
 
-<pre><code>get('/', function(){
-    this.render('index.html.haml', {
-        locals: { title: 'My Site' }
-    });
-});
+ // render a single comment
+ res.partial('comment', comment);
 </code></pre>
 
-<p>We now have <em>res.render()</em>, however the options passed to <a href="http://github.com/visionmedia/haml.js">haml</a>, <a href="http://github.com/visionmedia/jade">jade</a>, and others
-remain the same.</p>
+<h3 id="Template-Engine-Compliance">Template Engine Compliance</h3>
 
-<pre><code>app.get('/', function(req, res){
-    res.render('index.haml', {
-        locals: { title: 'My Site' }
-    });
-});
+<p> To comply with Express previously engines needed the following signature:</p>
+
+<pre><code> engine.render(str, options, function(err){});
 </code></pre>
 
-<p>Previously rendering of a collection via <em>partial()</em> would look something like this:</p>
+<p> Now they must export a <em>compile()</em> function, returning a function which when called with local variables will render the template. This allows Express to cache the compiled function in memory during production.</p>
 
-<pre><code>this.partial('comment.html.haml', { collection: comments });
+<pre><code> var fn = engine.compile(str, options);
+ fn(locals);
 </code></pre>
 
-<p>Although this worked just fine, it was generally to verbose, the similar but new API
-looks like this, as <em>partial()</em> is <em>always</em> passed as a local variable:</p>
+<h3 id="View-Partial-Lookup">View Partial Lookup</h3>
 
-<pre><code>partial('comment.haml', { collection: comments });
-</code></pre>
+<p> Previously partials were loaded relative to the now removed <em>view partials</em> directory setting, or by default <em>views/partials</em>, now they are relative to the view calling them, read more on <a href="guide.html#View-Lookup">view lookup</a>.</p>
 
-<p>To make things even less verbose we can assume the extension when omitted:</p>
+<h3 id="Mime-Types">Mime Types</h3>
 
-<pre><code>partial('comment', { collection: comments });
-</code></pre>
+<p> Express and Connect now utilize the <em>mime</em> module in npm, so to add more use:</p>
 
-<p>And once again even further, when rendering a collection we can simply pass
-an array, if no other options are desired:</p>
-
-<pre><code>partial('comments', comments);
-</code></pre>
-
-<h3 id="Redirecting">Redirecting</h3>
-
-<p>Previously you would</p>
-
-<pre><code>this.redirect('/somewhere');
-</code></pre>
-
-<p>However you would now:</p>
-
-<pre><code>res.redirect('/somewhere');
-res.redirect('/somewhere', 301);
-</code></pre>
-
-<h3 id="HTTP-Client">HTTP Client</h3>
-
-<p>Previously Express provided a high level http client, this library is no more
-as it does not belong in Express, however it may be resurrected as a separate module.</p>
-
-<h3 id="Core-Extensions">Core Extensions</h3>
-
-<p>Express is no longer dependent on the <a href="http://github.com/visionmedia/ext.js">JavaScript Extensions</a> library, so those of you using the methods provided by it such as <code>Object.merge(a, b)</code> will need to
-roll your own, or install the module via:</p>
-
-<pre><code>$ npm install ext
+<pre><code> require('mime').define({ 'foo/bar': ['foo', 'bar'] });
 </code></pre>
 
 </div>

@@ -14,6 +14,7 @@
   * Dynamic view helpers
   * Application level view options
   * Content negotiation
+  * Application mounting
   * Focus on high performance
   * View rendering and partials support
   * Environment based configuration
@@ -31,22 +32,21 @@ The following are the major contributors of Express (in no specific order).
   * Aaron Heckmann ([aheckmann](http://github.com/aheckmann))
   * Guillermo Rauch ([guille](http://github.com/guille))
 
+## Third-Party Modules
+
+The following modules compliment or extend Express directly:
+
+  * [express-resource](http://github.com/visionmedia/express-resource) provides resourceful routing
+  * [express-messages](http://github.com/visionmedia/express-messages) flash message notification rendering
+  * [express-configure](http://github.com/visionmedia/express-configure) async configuration support (load settings from redis etc)
+  * [express-namespace](http://github.com/visionmedia/express-namespace) namespaced routing support
+
 ## More Information
 
   * [Google Group](http://groups.google.com/group/express-js) for discussion
   * Follow [tjholowaychuk](http://twitter.com/tjholowaychuk) on twitter for updates
-  * Annotated source [documentation](api.html)
-  * View the [Connect](http://github.com/senchalabs/connect) repo for middleware usage
+  * View the [Connect](http://senchalabs.github.com/connect) documentation
   * View the [Connect Wiki](http://wiki.github.com/senchalabs/connect/) for contrib middleware
   * View the [examples](http://github.com/visionmedia/express/tree/master/examples/)
   * View the [source](http://github.com/visionmedia/express)
-
-## Apps Using Express
-
-  * [wtfjs](http://wtfjs.com/) - JavaScript WTFs :)
-  * [Node Knockout](http://nodeknockout.com/) - node knockout competition site
-  * [Node News](http://nodejs.se/) - node news aggregator
-  * [Code Shelver](http://codeshelver.com/) - GitHub watch list app
-  * [Clickdummy](http://clickdummy.net/) - Fast prototyping for designers
-  * [E-Resistible](http://e-resistible.co.uk) - Online takeaway ordering app 
-  * [Storify](http://storify.com) - The future of publishing
+  * View the [contrib guide](contrib.html)

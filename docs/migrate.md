@@ -1,189 +1,143 @@
 
-### Built On Connect
+### Express 1.x to 2.x Migration
 
-Express 1.x is written to run on-top of the [Connect](http://extjs.github.com/Connect) middlware
-framework, thus the _Plugin_ has been replaced by Connect's middleware. By abstracting our middleware
-to Connect we allow additional community frameworks to develop robust, high-level frameworks using
-the same technologies as Express.
+### HTTPS
 
-### Creating Applications
+ Creating an HTTPS server is simply, simply pass the TLS options to _express.createServer()_:
+ 
+     var app = express.createServer({
+         key: ...
+       , cert: ...
+     });
 
-Previously due to legacy code implemented in the early days of node,
-Express unfortunately had some globals. The DSL would previously be
-accessed as shown below:
+     app.listen(443);
 
-    require('express');
+### req.header() Referrer
 
-    configure(function(){
-	    // app configuration
-    });
+ Previously if anyone was doing something similar to:
+ 
+     req.headers.referrer || req.headers.referer
+     req.header('Referrer') || req.header('Referer')
 
-    get('/', function(){
-	    return 'hello world';
-    });
+ With the new special-case we may now simply use _Referrer_ which will return either if defined:
+ 
+     req.header('Referrer')
 
-Now we utilize the CommonJS module system appropriately, and
-introduce _express.createServer()_ which accepts the same arguments
-as _http.createServer()_:
+### res.local(name, val)
 
-    var express = require('express'),
-		app = express.createServer();
-	
-	app.configure(function(){
-		// app configuration
-	});
-	
-	app.get('/', function(req, res){
-		res.send('hello world');
-	});
+ Previously all local variables had to be passed to _res.render()_, or either _app.helpers()_ or _app.dynamicHelpers()_, now we may do this at the request-level progressively. The _res.local()_ method accepts a _name_ and _val_, however the locals passed to _res.render()_ will take precedence.
 
-Express 1.x does _not_ currently allow returning of a string.
+ For example we may utilize this feature to create locals in middleware:
 
-### Plugins vs Middleware
+     function loadUser(req, res, next) {
+       User.get(req.params.id, function(err, user){
+         res.local('user', user);
+         next();
+       });
+     }
 
-Previously Express was bundled with plugins, which were essentially what
-are now Connect middleware. Previously plugins would be utilized in a manor
-similar to below:
+     app.get('/user/:id', loadUser, function(req, res){
+       res.render('user');
+     });
 
-    use(Logger);
-    use(MethodOverride);
-    use(Cookie);
+### req.param(name[, defaultValue])
 
-Which we can now _use()_ within our app, or pass to the _express.createServer()_ method:
+ Previously only _name_ was accepted, so some of you may have been doing the following:
+ 
+     var id = req.param('id') || req.user.id;
 
-    var app = express.createServer(
-		express.logger(),
-		express.methodOverride(),
-		express.cookieDecoder()
-	);
+ The new _defaultValue_ argument can handle this nicely:
+ 
+     var id = req.param('id', req.user.id);
 
-or:
+### app.helpers() / app.locals()
 
-	var app = express.createServer();
+  _app.locals()_ is now an alias of _app.helpers()_, as helpers makes more sense for functions.
 
-	app.use(express.logger());
-	app.use(express.methodOverride());
-	app.use(express.cookieDecoder());
+### req.accepts(type)
 
-For documentation on creating Connect middleware visit [Middleware Authoring](http://extjs.github.com/Connect/#Middleware-Authoring).
+  _req.accepts()_ now accepts extensions:
+  
+  
+      // Accept: text/html
+      req.accepts('html');
+      req.accepts('.html');
+      // => true
+      
+      // Accept: text/*; application/json
+      req.accepts('html');
+      req.accepts('text/*');
+      req.accepts('text/plain');
+      req.accepts('application/json');
+      // => true
+      
+      req.accepts('image/png');
+      req.accepts('png');
+      // => false
 
-### Running Applications
+### res.cookie()
 
-Previously a global function _run()_, was available:
+ Previously only directly values could be passed, so for example:
 
-    run();
+    res.cookie('rememberme', 'yes', { expires: new Date(Date.now() + 900000) });
 
-The new _express.Server_ has the same API as _http.Server_,
-so we can do things like:
+However now we have the alternative _maxAge_ property which may be used to set _expires_ relative to _Date.now()_ in milliseconds, so our example above can now become:
 
-	app.listen();
-	app.listen(3000);
+    res.cookie('rememberme', 'yes', { maxAge: 900000 });
 
-### Route Parameters
+### res.download() / res.sendfile()
 
-Previously we could use _this.param()_ to attempt
-fetching a route, query string, or request body parameter:
+ Both of these methods now utilize Connect's static file server behind the scenes (actually the previous Express code was ported to Connect 1.0). With this change comes a change to the callback as well. Previously the _path_ and _stream_ were passed, however now only an _error_ is passed, when no error has occurred the callback will be invoked indicating that the file transfer is complete. The callback remains optional:
+ 
+     res.download('/path/to/file');
 
-    get('/user/:id', function(){
-		this.param('id');
-    });
+     res.download('/path/to/file', function(err){
+       if (err) {
+         console.error(err);
+       } else {
+         console.log('transferred');
+       }
+     });
 
-Polymorphic parameter access can be done using `req.param()`:
+ The _stream threshold_ setting was removed.
 
-    app.get('/user/:id', function(req, res){
-		req.param('id');
-	});
+### res.render()
 
-Route parameters are available via `req.params`:
+ Previously locals were passed as a separate key:
+ 
+     res.render('user', { layout: false, locals: { user: user }});
 
-    app.get('/user/:id', function(req, res){
-		req.params.id;
-    });
+ In Express 2.0 both the locals and the options are one in the same, meaning you cannot have a local variable named _layout_ as it is reserved for express, however this cleans up the API:
+ 
+     res.render('user', { layout: false, user: user });
 
-### Passing Route Control
+### res.partial()
 
-Old express had a weak notion of route passing,
-which did not support async, and was never properly 
-implemented for practical use:
+ Express 2.0 adds the _res.partial()_ method, helpful for rendering partial fragments over WebSockets or Ajax requests etc. The API is identical to the _partial()_ calls within views.
+ 
+     // render a collection of comments
+     res.partial('comment', [comment1, comment2]); 
 
-    get('/', function(){
-	    this.pass('/foobar');
-    });
+     // render a single comment
+     res.partial('comment', comment);
 
-Now Express has access to Connect's _next()_ function,
-which is passed as the third and final argument. Calling _next()_ will
-pass control to the next _matching route_, or continue down the stack
-of Connect middleware.
+### Template Engine Compliance
 
-    app.get('/user/:id?', function(req, res, next){
-	    next();
-    });
+ To comply with Express previously engines needed the following signature:
+ 
+     engine.render(str, options, function(err){});
 
-	app.get('/user', function(){
-		// ... respond
-	});
+ Now they must export a _compile()_ function, returning a function which when called with local variables will render the template. This allows Express to cache the compiled function in memory during production.
+ 
+     var fn = engine.compile(str, options);
+     fn(locals);
 
-### View Rendering
+### View Partial Lookup
 
-View filenames no longer take the form _NAME_._TYPE_._ENGINE_,
-the _Content-Type_ can be set via _res.contentType()_ or
-_res.header()_. For example what was previously _layout.html.haml_,
-should now be _layout.haml_.
+ Previously partials were loaded relative to the now removed _view partials_ directory setting, or by default _views/partials_, now they are relative to the view calling them, read more on [view lookup](guide.html#View-Lookup).
 
-Previously a view render looked something like this:
+### Mime Types
 
-    get('/', function(){
-		this.render('index.html.haml', {
-			locals: { title: 'My Site' }
-		});
-	});
-
-We now have _res.render()_, however the options passed to [haml](http://github.com/visionmedia/haml.js), [jade](http://github.com/visionmedia/jade), and others
-remain the same.
-
-	app.get('/', function(req, res){
-		res.render('index.haml', {
-			locals: { title: 'My Site' }
-		});
-	});
-
-Previously rendering of a collection via _partial()_ would look something like this:
-
-	this.partial('comment.html.haml', { collection: comments });
-
-Although this worked just fine, it was generally to verbose, the similar but new API
-looks like this, as _partial()_ is _always_ passed as a local variable:
-
-    partial('comment.haml', { collection: comments });
-
-To make things even less verbose we can assume the extension when omitted:
-
-    partial('comment', { collection: comments });
-
-And once again even further, when rendering a collection we can simply pass
-an array, if no other options are desired:
-
-    partial('comments', comments);
-
-### Redirecting
-
-Previously you would
-
-    this.redirect('/somewhere');
-
-However you would now:
-
-    res.redirect('/somewhere');
-    res.redirect('/somewhere', 301);
-
-### HTTP Client
-
-Previously Express provided a high level http client, this library is no more
-as it does not belong in Express, however it may be resurrected as a separate module.
-
-### Core Extensions
-
-Express is no longer dependent on the [JavaScript Extensions](http://github.com/visionmedia/ext.js) library, so those of you using the methods provided by it such as `Object.merge(a, b)` will need to
-roll your own, or install the module via:
-
-    $ npm install ext
+ Express and Connect now utilize the _mime_ module in npm, so to add more use:
+ 
+     require('mime').define({ 'foo/bar': ['foo', 'bar'] });

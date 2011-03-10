@@ -1,16 +1,20 @@
 
+// Expose modules in ./support for demo purposes
+require.paths.unshift(__dirname + '/../../support');
+
 /**
  * Module dependencies.
  */
 
-var express = require('./../../lib/express'),
-    http = require('http');
+var express = require('../../lib/express')
+  , http = require('http');
 
 var app = express.createServer();
 
 // Expose our views
 
 app.set('views', __dirname + '/views');
+app.set('view engine', 'jade');
 
 /**
  * Request github json api `path`.
@@ -21,20 +25,20 @@ app.set('views', __dirname + '/views');
  */
 
 function request(path, fn){
-    var client = http.createClient(80, 'github.com'),
-        req = client.request('GET', '/api/v2/json' + path, { Host: 'github.com' });
-    req.addListener('response', function(res){
-        res.body = '';
-        res.addListener('data', function(chunk){ res.body += chunk; });
-        res.addListener('end', function(){
-            try {
-                fn(null, JSON.parse(res.body));
-            } catch (err) {
-                fn(err);
-            }
-        });
+  var client = http.createClient(80, 'github.com')
+    , req = client.request('GET', '/api/v2/json' + path, { Host: 'github.com' });
+  req.on('response', function(res){
+    res.body = '';
+    res.on('data', function(chunk){ res.body += chunk; });
+    res.on('end', function(){
+      try {
+        fn(null, JSON.parse(res.body));
+      } catch (err) {
+        fn(err);
+      }
     });
-    req.end();
+  });
+  req.end();
 }
 
 /**
@@ -45,11 +49,11 @@ function request(path, fn){
  */
 
 function sort(repos){
-    return repos.sort(function(a, b){
-        if (a.watchers == b.watchers) return 0;
-        if (a.watchers > b.watchers) return -1;
-        if (a.watchers < b.watchers) return 1;
-    });
+  return repos.sort(function(a, b){
+    if (a.watchers == b.watchers) return 0;
+    if (a.watchers > b.watchers) return -1;
+    if (a.watchers < b.watchers) return 1;
+  });
 }
 
 /**
@@ -61,9 +65,9 @@ function sort(repos){
  */
 
 function totalWatchers(repos) {
-    return repos.reduce(function(sum, repo){
-        return sum + repo.watchers;
-    }, 0);
+  return repos.reduce(function(sum, repo){
+    return sum + repo.watchers;
+  }, 0);
 }
 
 /**
@@ -71,7 +75,7 @@ function totalWatchers(repos) {
  */
 
 app.get('/', function(req, res){
-    res.redirect('/repos/visionmedia');
+  res.redirect('/repos/visionmedia');
 });
 
 /**
@@ -79,37 +83,34 @@ app.get('/', function(req, res){
  */
 
 app.get('/repos/*', function(req, res, next){
-    var names = req.params[0].split('/'),
-        users = [];
-    (function fetchData(name){
-        // We have a user name
-        if (name) {
-            console.log('... fetching %s', name);
-            request('/repos/show/' + name, function(err, user){
-                if (err) {
-                    next(err)
-                } else {
-                    user.totalWatchers = totalWatchers(user.repositories);
-                    user.repos = sort(user.repositories);
-                    user.name = name;
-                    users.push(user);
-                    fetchData(names.shift());
-                }
-            });
-        // No more users
+  var names = req.params[0].split('/')
+    , users = [];
+  (function fetchData(name){
+    // We have a user name
+    if (name) {
+      console.log('... fetching \x1b[33m%s\x1b[0m', name);
+      request('/repos/show/' + name, function(err, user){
+        if (err) {
+          next(err)
         } else {
-            console.log('... done');
-            res.render('index.jade', {
-                locals: {
-                    users: users
-                }
-            });
+          user.totalWatchers = totalWatchers(user.repositories);
+          user.repos = sort(user.repositories);
+          user.name = name;
+          users.push(user);
+          fetchData(names.shift());
         }
-    })(names.shift());
+      });
+    // No more users
+    } else {
+      console.log('... done');
+      res.render('index', { users: users });
+    }
+  })(names.shift());
 });
 
 // Serve statics from ./public
-app.use(express.staticProvider(__dirname + '/public'));
+app.use(express.static(__dirname + '/public'));
 
 // Listen on port 3000
 app.listen(3000);
+console.log('Express app started on port 3000');
